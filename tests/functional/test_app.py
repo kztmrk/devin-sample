@@ -11,9 +11,12 @@ def test_app_imports():
     assert app_path.exists(), f"App file not found at {app_path}"
     
     spec = importlib.util.spec_from_file_location("app", app_path)
+    assert spec is not None, "Failed to create module spec"
+    
     app_module = importlib.util.module_from_spec(spec)
     
     try:
+        assert spec.loader is not None, "Module loader is None"
         spec.loader.exec_module(app_module)
         assert True
     except Exception as e:
@@ -24,8 +27,11 @@ def test_app_structure(mock_streamlit):
     """Test the basic structure of the Streamlit app."""
     app_path = Path(__file__).parent.parent.parent / "src" / "streamlit_app" / "app.py"
     spec = importlib.util.spec_from_file_location("app", app_path)
+    assert spec is not None, "Failed to create module spec"
+    
     app_module = importlib.util.module_from_spec(spec)
     
+    assert spec.loader is not None, "Module loader is None"
     spec.loader.exec_module(app_module)
     
     mock_streamlit.set_page_config.assert_called_once()

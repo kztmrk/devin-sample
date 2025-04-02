@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-from typing import List, Dict, Any, Optional, Union, Tuple
+import matplotlib.pyplot as plt
+from typing import List, Optional, Dict, Any, Union
 
 
 def create_line_chart(
@@ -13,22 +13,44 @@ def create_line_chart(
     y_cols: List[str],
     title: str = "Line Chart",
     height: int = 400,
-) -> None:
+    width: Optional[int] = None,
+) -> go.Figure:
     """
-    Create and display a line chart using Streamlit's native chart function.
+    Create a line chart using Plotly.
     
     Args:
-        df: DataFrame containing the data
+        df: Input DataFrame
         x_col: Column name for x-axis
         y_cols: List of column names for y-axis
         title: Chart title
         height: Chart height in pixels
+        width: Chart width in pixels
+        
+    Returns:
+        Plotly figure object
     """
-    st.subheader(title)
+    fig = go.Figure()
     
-    chart_data = df.set_index(x_col)[y_cols]
+    for col in y_cols:
+        fig.add_trace(
+            go.Scatter(
+                x=df[x_col],
+                y=df[col],
+                mode="lines+markers",
+                name=col,
+            )
+        )
     
-    st.line_chart(chart_data, height=height)
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_col,
+        yaxis_title="Value",
+        height=height,
+        width=width,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    
+    return fig
 
 
 def create_bar_chart(
@@ -37,45 +59,42 @@ def create_bar_chart(
     y_col: str,
     color_col: Optional[str] = None,
     title: str = "Bar Chart",
-    orientation: str = "vertical",
-) -> None:
+    height: int = 400,
+    width: Optional[int] = None,
+) -> go.Figure:
     """
-    Create and display a bar chart using Plotly.
+    Create a bar chart using Plotly.
     
     Args:
-        df: DataFrame containing the data
+        df: Input DataFrame
         x_col: Column name for x-axis
         y_col: Column name for y-axis
         color_col: Column name for color grouping
         title: Chart title
-        orientation: Chart orientation ('vertical' or 'horizontal')
+        height: Chart height in pixels
+        width: Chart width in pixels
+        
+    Returns:
+        Plotly figure object
     """
-    st.subheader(title)
-    
-    if orientation == "horizontal":
-        fig = px.bar(
-            df,
-            y=x_col,
-            x=y_col,
-            color=color_col,
-            title=title,
-            orientation='h',
-        )
-    else:
-        fig = px.bar(
-            df,
-            x=x_col,
-            y=y_col,
-            color=color_col,
-            title=title,
-        )
+    fig = px.bar(
+        df,
+        x=x_col,
+        y=y_col,
+        color=color_col,
+        title=title,
+        height=height,
+        width=width,
+        barmode="group" if color_col else None,
+    )
     
     fig.update_layout(
-        height=500,
+        xaxis_title=x_col,
+        yaxis_title=y_col,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
 def create_scatter_plot(
@@ -85,20 +104,25 @@ def create_scatter_plot(
     color_col: Optional[str] = None,
     size_col: Optional[str] = None,
     title: str = "Scatter Plot",
-) -> None:
+    height: int = 400,
+    width: Optional[int] = None,
+) -> go.Figure:
     """
-    Create and display a scatter plot using Plotly.
+    Create a scatter plot using Plotly.
     
     Args:
-        df: DataFrame containing the data
+        df: Input DataFrame
         x_col: Column name for x-axis
         y_col: Column name for y-axis
-        color_col: Column name for color
+        color_col: Column name for color grouping
         size_col: Column name for point size
         title: Chart title
+        height: Chart height in pixels
+        width: Chart width in pixels
+        
+    Returns:
+        Plotly figure object
     """
-    st.subheader(title)
-    
     fig = px.scatter(
         df,
         x=x_col,
@@ -106,47 +130,55 @@ def create_scatter_plot(
         color=color_col,
         size=size_col,
         title=title,
-        opacity=0.7,
+        height=height,
+        width=width,
     )
     
     fig.update_layout(
-        height=500,
+        xaxis_title=x_col,
+        yaxis_title=y_col,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
 def create_heatmap(
     df: pd.DataFrame,
     title: str = "Correlation Heatmap",
-) -> None:
+    height: int = 500,
+    width: Optional[int] = None,
+) -> go.Figure:
     """
-    Create and display a correlation heatmap using Plotly.
+    Create a correlation heatmap using Plotly.
     
     Args:
-        df: DataFrame containing numeric data
+        df: Input DataFrame
         title: Chart title
+        height: Chart height in pixels
+        width: Chart width in pixels
+        
+    Returns:
+        Plotly figure object
     """
-    st.subheader(title)
-    
     corr_matrix = df.corr()
     
-    fig = go.Figure(data=go.Heatmap(
-        z=corr_matrix.values,
-        x=corr_matrix.columns,
-        y=corr_matrix.index,
-        colorscale='RdBu_r',
-        zmin=-1,
-        zmax=1,
-    ))
-    
-    fig.update_layout(
-        height=600,
+    fig = px.imshow(
+        corr_matrix,
+        text_auto=True,
+        aspect="auto",
+        color_continuous_scale="RdBu_r",
         title=title,
+        height=height,
+        width=width,
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(
+        xaxis_title="Features",
+        yaxis_title="Features",
+    )
+    
+    return fig
 
 
 def create_pie_chart(
@@ -154,27 +186,32 @@ def create_pie_chart(
     values_col: str,
     names_col: str,
     title: str = "Pie Chart",
-) -> None:
+    height: int = 400,
+    width: Optional[int] = None,
+) -> go.Figure:
     """
-    Create and display a pie chart using Plotly.
+    Create a pie chart using Plotly.
     
     Args:
-        df: DataFrame containing the data
+        df: Input DataFrame
         values_col: Column name for values
-        names_col: Column name for segment names
+        names_col: Column name for category names
         title: Chart title
+        height: Chart height in pixels
+        width: Chart width in pixels
+        
+    Returns:
+        Plotly figure object
     """
-    st.subheader(title)
-    
     fig = px.pie(
         df,
         values=values_col,
         names=names_col,
         title=title,
+        height=height,
+        width=width,
     )
     
-    fig.update_layout(
-        height=500,
-    )
+    fig.update_traces(textposition="inside", textinfo="percent+label")
     
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
